@@ -1,7 +1,7 @@
 ---
-title: "ISTA_320_Final"
-author: "Robert Lopez"
-date: "4/29/2022"
+title : ISTA 320 Final
+author: Robert Lopez  
+email : rlopez4747@email.arizona.edu
 output: html_document
 ---
 
@@ -9,22 +9,44 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r, include=FALSE}
+# loading data and libraries
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+library(knitr)
+performance_df <- read_csv('StudentsPerformance.csv')
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# remove race/ethnic column, we are not gonna use it. 
+performance_df <- performance_df %>%
+  select(-`race/ethnicity`)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# get only the top scores
+top_scores <- performance_df %>%
+  group_by(`math score`) %>% 
+  summarize(total_obs = n()) %>%
+  top_n(5)
 
-```{r cars}
-summary(cars)
+# get rid of spaces and apostrophes 
+performance_df$`parental level of education` <- performance_df$`parental level of education` %>%
+  str_replace('\\s', '_') %>%
+  str_remove('[\']')
 ```
 
-## Including Plots
+Hypothesis One: Reading scores are higher than both writing and math scores.
+```{r, include = FALSE}
+performance_melted <- performance_df %>%
+  select(-`parental level of education`, -lunch, -`test preparation course`, -gender)
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+performance_melted <- melt(as.data.frame(performance_melted))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+The following histograms show the scores from 90 percent to 100 percent. The reading scores have the most 100 percents. This means that this exam gets the higher scores overall. It must be easier. 
+```{r, eval=TRUE}
+ggplot(performance_melted %>% filter(value > 90),
+       aes( x = value,
+            fill = variable)) +
+  geom_bar() +
+  facet_wrap(~variable)
+```
