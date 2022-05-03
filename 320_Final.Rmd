@@ -22,11 +22,6 @@ performance_df <- read_csv('StudentsPerformance.csv')
 performance_df <- performance_df %>%
   select(-`race/ethnicity`)
 
-# get only the top scores
-top_scores <- performance_df %>%
-  group_by(`math score`) %>% 
-  summarize(total_obs = n()) %>%
-  top_n(5)
 
 # get rid of spaces and apostrophes 
 performance_df$`parental level of education` <- performance_df$`parental level of education` %>%
@@ -34,7 +29,7 @@ performance_df$`parental level of education` <- performance_df$`parental level o
   str_remove('[\']')
 ```
 
-Hypothesis One: Reading scores are higher than both writing and math scores.
+Question One: Which exam gets the highest scores?
 ```{r, include = FALSE}
 performance_melted <- performance_df %>%
   select(-`parental level of education`, -lunch, -`test preparation course`, -gender)
@@ -43,10 +38,35 @@ performance_melted <- melt(as.data.frame(performance_melted))
 ```
 
 The following histograms show the scores from 90 percent to 100 percent. The reading scores have the most 100 percents. This means that this exam gets the higher scores overall. It must be easier. 
-```{r, eval=TRUE}
+```{r,  include=TRUE}
 ggplot(performance_melted %>% filter(value > 90),
        aes( x = value,
             fill = variable)) +
   geom_bar() +
-  facet_wrap(~variable)
+  facet_wrap(~variable) +
+  labs(title = 'Total Exam Scores From 90-100%',
+       x = 'Percent',
+       y = 'Total')
 ```
+
+Question two: How many students completed the test preparation?
+The following pie chart shows how many students completed the test preparation course.
+
+```{r}
+test_prep <- performance_df %>%
+  select(`test preparation course`)
+
+test_prep$`test preparation course` <- ifelse(test_prep$`test preparation course` == 'none', 0, 1)
+
+no <- sum(test_prep$`test preparation course` == 0)
+yes <- sum(test_prep$`test preparation course` == 1)
+total <- c(no, yes)
+lbls <- c('not-taken', 'taken')
+piepercent <- round(100*total/sum(total), 1)
+pie(total, labels = piepercent, main = 'Students who completed Test Prep' ,col = c('#E1BE6A', '#40B0A6')) 
+
+legend("topright", c("Not Taken","Taken"), cex = 0.8,
+   fill = c('#E1BE6A', '#40B0A6'))
+```
+
+Question Three: Did the students who completed the test prep score higher than the ones who did not?
