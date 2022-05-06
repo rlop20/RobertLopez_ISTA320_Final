@@ -16,6 +16,7 @@ library(ggplot2)
 library(reshape2)
 library(dplyr)
 library(knitr)
+library(gapminder)
 performance_df <- read_csv('StudentsPerformance.csv')
 
 # remove race/ethnic column, we are not gonna use it. 
@@ -37,9 +38,9 @@ performance_melted <- performance_df %>%
 performance_melted <- melt(as.data.frame(performance_melted))
 ```
 
-The following histograms show the scores from 90 percent to 100 percent. The reading scores have the most 100 percents. This means that this exam gets the higher scores overall. It must be easier. 
-```{r,  include=TRUE}
-ggplot(performance_melted %>% filter(value > 90),
+The following bar graphs show the scores from 90 percent to 100 percent. The reading scores have the most 100 percents. This means that this exam gets the higher scores overall. It must be easier. 
+```{r,  include=FALSE}
+totals <- ggplot(performance_melted %>% filter(value > 90),
        aes( x = value,
             fill = variable)) +
   geom_bar() +
@@ -49,10 +50,14 @@ ggplot(performance_melted %>% filter(value > 90),
        y = 'Total')
 ```
 
+```{r, include=TRUE}
+totals 
+```
+
 Question two: How many students completed the test preparation?
 The following pie chart shows how many students completed the test preparation course.
 
-```{r}
+```{r, include = FALSE}
 test_prep <- performance_df %>%
   select(`test preparation course`)
 
@@ -63,10 +68,38 @@ yes <- sum(test_prep$`test preparation course` == 1)
 total <- c(no, yes)
 lbls <- c('not-taken', 'taken')
 piepercent <- round(100*total/sum(total), 1)
-pie(total, labels = piepercent, main = 'Students who completed Test Prep' ,col = c('#E1BE6A', '#40B0A6')) 
 
+```
+
+```{r}
+pie(total, labels = piepercent, main = 'Students who completed Test Prep' ,col = c('#E1BE6A', '#40B0A6')) 
 legend("topright", c("Not Taken","Taken"), cex = 0.8,
    fill = c('#E1BE6A', '#40B0A6'))
 ```
 
 Question Three: Did the students who completed the test prep score higher than the ones who did not?
+```{r, include = FALSE}
+completed_scores <- performance_df %>%
+  select(`test preparation course`, `math score`, `reading score`, `writing score`) %>%
+  filter(`test preparation course` == 'completed')
+not_completed_scores <- performance_df %>%
+  filter(`test preparation course` == 'none')
+
+math <- completed_scores %>% count(`math score`)
+math2 <- not_completed_scores %>% count(`math score`)
+colnames(math) <- c('score','total')
+colnames(math2) <- c('score','total')
+
+math_plot_completed <- ggplot(math, aes(`score`, total)) +
+  geom_point()
+math_plot_not_completed <- ggplot(math2, aes(`score`, total)) +
+  geom_point()
+```
+
+These two line plots show that students who took the prep test have less lower scores; such as 60 percent.
+They also have more 90 percentile scores than ones who did not.
+```{r, include = TRUE}
+print(math_plot_completed + ggtitle('Math scores of students who did take test prep'))
+print(math_plot_not_completed + ggtitle('Math scores of students who did not take test prep'))
+```
+
